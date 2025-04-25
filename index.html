@@ -1,0 +1,632 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aanya Pandith's Fitness Journey</title>
+    <!-- Import Inter font for clean typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset default styles for consistency */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Enable smooth scrolling globally */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Base styles for body with minimalistic dark theme */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #0a0a0a;
+            color: #ffffff;
+            line-height: 1.7;
+            font-weight: 400;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Centralized container with wider margins */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        /* Header with parallax background */
+        header {
+            position: relative;
+            padding: 140px 0;
+            text-align: center;
+            overflow: hidden;
+            background: #0a0a0a;
+        }
+
+        /* Parallax background image */
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80') no-repeat center center/cover;
+            opacity: 0.15;
+            z-index: -1;
+            transform: translateY(0);
+            transition: transform 0.1s linear;
+        }
+
+        /* Header title with clean typography */
+        header h1 {
+            font-size: 3.8rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        /* Header subtitle with subtle opacity */
+        header p {
+            font-size: 1.3rem;
+            max-width: 800px;
+            margin: 0 auto;
+            opacity: 0.7;
+            font-weight: 400;
+        }
+
+        /* Sticky navigation with minimal design */
+        nav {
+            background: #0a0a0a;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 16px 0;
+            border-bottom: 1px solid #4b5563;
+        }
+
+        /* Navigation list */
+        nav ul {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin: 0 24px;
+        }
+
+        /* Navigation links with smooth hover transitions */
+        nav ul li a {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 400;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            color: #a8b2d1;
+            transform: translateY(-2px);
+        }
+
+        /* Section styling with minimalistic card design */
+        section {
+            padding: 120px 0;
+            background: #0a0a0a;
+            margin: 48px 0;
+            border-radius: 12px;
+            position: relative;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        /* Fade-in when section is visible */
+        section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Section parallax background */
+        section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80') no-repeat center center/cover;
+            opacity: 0.05;
+            z-index: -1;
+            transform: translateY(0);
+            transition: transform 0.1s linear;
+        }
+
+        /* Section headings with clean underline */
+        section h2 {
+            font-size: 2.8rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            width: 80px;
+            height: 3px;
+            background: #4b5563;
+            border-radius: 1.5px;
+        }
+
+        /* Section paragraphs with improved readability */
+        section p {
+            font-size: 1.1rem;
+            color: #d1d5db;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        /* Visual sections with minimal borders */
+        .visual-section {
+            background: #0a0a0a;
+            padding: 32px;
+            border: 1px solid #4b5563;
+            border-radius: 10px;
+            margin: 32px 0;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .visual-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Visual section headings */
+        .visual-section h3 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        /* Visual section paragraphs */
+        .visual-section p {
+            font-size: 1rem;
+            color: #9ca3af;
+            margin-bottom: 20px;
+        }
+
+        /* Embedded visualizations with clean frame */
+        .flourish-embed {
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #1e1e1e;
+        }
+
+        /* Placeholder for D3 visualizations */
+        .d3-visualization {
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            background: #1e1e1e;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 1rem;
+        }
+
+        /* Highlight sections with minimal design */
+        .highlight {
+            background: #0a0a0a;
+            padding: 48px;
+            text-align: center;
+            border-radius: 12px;
+            margin: 48px 0;
+            border: 1px solid #4b5563;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .highlight.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .highlight h2 {
+            font-size: 2.8rem;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .highlight h2::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: #4b5563;
+        }
+
+        .highlight p {
+            font-size: 1.3rem;
+            max-width: 800px;
+            margin: 20px auto;
+            color: #d1d5db;
+        }
+
+        /* Footer with minimal design */
+        footer {
+            background: #0a0a0a;
+            color: #d1d5db;
+            padding: 32px 0;
+            text-align: center;
+            border-top: 1px solid #4b5563;
+        }
+
+        footer p {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2.8rem;
+            }
+
+            section h2 {
+                font-size: 2.2rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            nav ul li {
+                margin: 12px 0;
+            }
+
+            .highlight p {
+                font-size: 1.1rem;
+            }
+
+            .visual-section {
+                padding: 24px;
+            }
+
+            .container {
+                padding: 0 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header showcasing the journey's title and introduction -->
+    <header>
+        <div class="container">
+            <h1>Aanya Pandith's Fitness Journey</h1>
+            <p>A decade of dedication, resilience, and transformation through fitness and wellness.</p>
+        </div>
+    </header>
+
+    <!-- Sticky navigation for easy section access -->
+    <nav>
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#early-beginnings">Early Beginnings</a></li>
+            <li><a href="#building-momentum">Building Momentum</a></li>
+            <li><a href="#consistency">Consistency & Challenges</a></li>
+            <li><a href="#resilience">Resilience</a></li>
+            <li><a href="#peak-performance">Peak Performance</a></li>
+            <li><a href="#connections">Connections</a></li>
+            <li><a href="#reflections">Reflections</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main content container -->
+    <div class="container">
+        <!-- Section: Overview -->
+        <section id="overview">
+            <h2>Overview</h2>
+            <p>They say, "If you want to control a habit, just track it." This project chronicles my comprehensive fitness journey from 2016 to 2024. It integrates data from multiple sources to provide a holistic view of physical and mental well-being. I aspired to be a professional badminton player. I embarked on this journey. My coach suggested me to wear a FitBit everyday and track my progress. This habit stayed with me for a long time, even after an injury dispurted my sports careere. I didn't stop wearing my FitBit or exercising. Little did I know it was going to turn out to be so useful. The primary data source for this project is my Fitbit, which tracked workouts, sleep, heart rate, steps, and other fitness metrics. Complementing this, is Digital Wellbeing data which offers insights into technology usage patterns, capturing screen time and its impact on mental health. Additionally, a health tracker app Headspace, which recorded my mood, stress levels, anxiety, depression scores, and other lifestyle factors such as meditation habits and caffeine intake as a daily journal practise. By combining these datasets, this project explores correlations between fitness activities, mental health, and daily habits, visualized through interactive charts and diagrams. The goal is to uncover patterns that reveal how exercise, sleep, and technology use intertwine to shape overall health, providing a data-driven narrative of resilience and personal growth. Looking back at the dates, and the progress I would have never thought that I would be able to make these connections by myself. It was exclusively throguh this project that I am able to reflect on my self.</p>
+        </section>
+
+        <!-- Section: Early Beginnings -->
+        <section id="early-beginnings">
+            <h2>Early Beginnings (June 2016)</h2>
+            <p>In June 2016, I embarked on my professional badminton journey, driven by a desire to represent my country in the Olympics. I remember seeing P.V. Sindhu win her first silver and that was my Eureka moment to start. My days were filled with diverse workouts, from high-intensity interval training (HIIT) to strength training and cycling. On June 12, I tackled a 27-minute HIIT session, burning 540 calories with my heart rate peaking at 133 bpm, feeling happy before the workout but fatigued afterward. This mix of emotions became a recurring theme, reflecting the physical demands and mental rewards of my efforts. My sleep was robust, averaging 7-9 hours, though stress and fatigue occasionally crept in, especially after intense sessions like the 94-minute HIIT workout on June 16, which burned 855 calories and left me energized despite starting happy.</p>
+            <div class="visual-section">
+                <h3>Workout and Intensity Flow</h3>
+                <p>This Sankey diagram illustrates the relationship between workout types and their intensity levels in 2016, highlighting how HIIT and cycling often aligned with high-intensity efforts, while yoga was more balanced across intensities. The flow visualizes the frequency and connection between exercises like strength training and their high or medium intensity.</p>
+                <div class="flourish-embed flourish-sankey" data-src="visualisation/22824857"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824857/thumbnail" width="100%" alt="sankey visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Split Map of Workout Patterns</h3>
+                <p>This Sankey visualization breaks down workout patterns by type and day of the week, showing how weekends often featured HIIT and yoga, while weekdays leaned toward cycling and strength training.</p>
+                <div class="flourish-embed flourish-sankey" data-src="visualisation/22822024"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22822024/thumbnail" width="100%" alt="sankey visualization" /></noscript></div>
+            </div>
+        </section>
+
+        <!-- Section: Building Momentum -->
+        <section id="building-momentum">
+            <h2>Building Momentum (July 2016 - December 2016)</h2>
+            <p>As summer approached, I changed my routine to include yoga and running with strength and cardio. Around this time, I became interested in professional sports, aiming to be a professional badminton player. I started this journey with my coach's advice to wear a FitBit daily to track my progress.In July 2016, I pushed my limits with a 114-minute cycling session on July 1. I burned 693 calories and felt energized, despite my heart rate hitting 178 bpm. Yoga became essential for balance. A 90-minute session on June 18 helped me manage stress, even though I often felt tired afterwards.My daily calorie intake was around 2000-3000 kcal, which supported my active lifestyle. I also drank 1.9 liters of water each day. By December, I balanced intense running sessions, like 115 minutes on June 27 where I burned 976 calories, with restorative yoga. I maintained a body fat percentage of 28.5% and a VO2 Max of 38.4, showing good cardiovascular fitness.</p>
+            <div class="visual-section">
+                <h3>Workout Intensity Distribution</h3>
+                <p>This Sankey visualization quantifies workout intensity numerically, showing the distribution of low, medium, and high-intensity workouts during late 2016. High-intensity sessions like running and HIIT dominated, with medium-intensity yoga providing balance.</p>
+                <div class="flourish-embed flourish-sankey" data-src="visualisation/22824843"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824843/thumbnail" width="100%" alt="sankey visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Calorie Burn Trends</h3>
+                <p>This chart tracks calorie burn across workouts in 2016, revealing peaks during high-intensity sessions like HIIT (up to 976 calories) and running, contrasted with lower but consistent calorie expenditure in yoga sessions.</p>
+                <div class="flourish-embed flourish-chart" data-src="visualisation/22824529"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824529/thumbnail" width="100%" alt="chart visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Workout Type Circle</h3>
+                <p>This circular hierarchy visualization organizes workout types, emphasizing the prominence of cycling and strength training, with yoga and running forming significant but smaller segments of my routine.</p>
+                <div class="flourish-embed flourish-hierarchy" data-src="visualisation/22824514"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824514/thumbnail" width="100%" alt="hierarchy visualization" /></noscript></div>
+            </div>
+        </section>
+
+        <!-- Section: Consistency and Challenges -->
+        <section id="consistency">
+            <h2>Consistency and Challenges (2017 - 2020)</h2>
+            <p>Over the next few years, I stuck to a routine, but data gaps show some inconsistent tracking. When I recorded my workouts, they included cycling, HIIT, and strength training, with some yoga for mental clarity. My mood before workouts often changed between happy and stressed, reflecting life's demands. However, I usually felt an energy boost after exercising. My sleep varied from 4 to 9 hours, which affected recovery. Still, my resting heart rate (50-89 bpm) and steps taken (up to 19,000 daily) showed I was committed to staying active. Calorie burn ranged widely, from 125 calories in a short yoga session to 993 in a 98-minute strength workout in August 2016.</p>
+            <div class="visual-section">
+                <h3>Mood Before and After Workouts</h3>
+                <p>This pictogram visualizes mood shifts, showing a trend of moving from stressed or tired to energized or neutral post-workout. Strength and HIIT sessions particularly boosted my mood, enhancing mental resilience.</p>
+                <div class="flourish-embed flourish-pictogram" data-src="visualisation/22822804"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22822804/thumbnail" width="100%" alt="pictogram visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Workout Type Hierarchy</h3>
+                <p>This radial visualization organizes workout types hierarchically, illustrating how cycling and strength training were central, with yoga providing mental clarity during challenging years.</p>
+                <div class="flourish-embed flourish-hierarchy" data-src="visualisation/22824836"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824836/thumbnail" width="100%" alt="hierarchy visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Big Spot Graph</h3>
+                <p>This scatter plot highlights relationships between steps taken and calorie burn, showing how high-step days (e.g., 19,000 steps) often aligned with intense cycling or running sessions.</p>
+                <div class="flourish-embed flourish-scatter" data-src="visualisation/22824199"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824199/thumbnail" width="100%" alt="scatter visualization" /></noscript></div>
+            </div>
+        </section>
+
+        <!-- Highlight section emphasizing resilience -->
+        <div class="highlight">
+            <h2>A Journey of Resilience</h2>
+            <p>Through global challenges and personal growth, my fitness routine became a cornerstone of mental and physical strength, adapting to life's ebb and flow with unwavering commitment.</p>
+        </div>
+
+        <!-- Section: Resilience Through Change -->
+        <section id="resilience">
+            <h2>Resilience Through Change (2021 - 2023)</h2>
+            <p>The early 2020s brought new challenges, likely due to global events, but my fitness journey persisted. By 2024, my routine was well-established, with a strong focus on cycling and running. A standout moment was October 26, 2024, when a 73-minute HIIT session burned 978 calories, leaving me energized despite a neutral start.</p>
+            <div class="visual-section">
+                <h3>Exercise and Data Relationships</h3>
+                <p>This chart explores correlations between workout types and metrics like distance and calories, highlighting how running and cycling in 2024 contributed to higher distances (up to 13.91 km).</p>
+                <div class="flourish-embed flourish-chart" data-src="visualisation/22822613"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22822613/thumbnail" width="100%" alt="chart visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Body Metrics Post-Workout</h3>
+                <p>This scatter plot examines post-workout metrics like heart rate and calorie burn, showing how high-intensity workouts in 2024 elevated heart rates (up to 168 bpm) while maintaining a consistent body fat percentage of 28.5%.</p>
+                <div class="flourish-embed flourish-scatter" data-src="visualisation/22822330"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22822330/thumbnail" width="100%" alt="scatter visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Cluster of All Metrics</h3>
+                <p>This scatter visualization clusters workouts by multiple metrics, revealing how 2024 sessions formed distinct groups based on high calorie burn and distance, particularly for cycling and HIIT.</p>
+                <div class="flourish-embed flourish-scatter" data-src="visualisation/22822330"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22822330/thumbnail" width="100%" alt="scatter visualization" /></noscript></div>
+            </div>
+        </section>
+
+        <!-- Section: Peak Performance -->
+        <section id="peak-performance">
+            <h2>Peak Performance (2024 - April 2025)</h2>
+            <p>By late 2024 and early 2025, I was in peak form, balancing high-intensity workouts with recovery-focused yoga. On December 17, 2024, a 71-minute strength session burned 995 calories, and despite feeling tired, I ended neutral, showcasing resilience.</p>
+            <div class="visual-section">
+                <h3>Workout Type Treemap</h3>
+                <p>This treemap visualizes the proportion of workout types in 2024-2025, with cycling and running occupying larger shares due to their frequency and high intensity, while yoga maintained a steady presence.</p>
+                <div class="flourish-embed flourish-hierarchy" data-src="visualisation/22824805"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824805/thumbnail" width="100%" alt="hierarchy visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Performance Clustering</h3>
+                <p>This cluster visualization groups workouts by performance metrics like steps and distance, revealing how 2025 running sessions formed distinct high-endurance clusters, with up to 19,955 steps in a single session.</p>
+                <div class="flourish-embed flourish-scatter" data-src="visualisation/22824549"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824549/thumbnail" width="100%" alt="scatter visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Spot Graph of Key Metrics</h3>
+                <p>This scatter plot highlights relationships between calories burned and steps taken in 2025, showing how high-step workouts like running (e.g., 745 calories, 10.06 km) correlated with significant calorie expenditure.</p>
+                <div class="flourish-embed flourish-scatter" data-src="visualisation/22824549"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824549/thumbnail" width="100%" alt="scatter visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Small Graph of Progress</h3>
+                <p>This compact chart tracks progress in calorie burn and distance covered in 2025, emphasizing steady improvement in running and cycling performance.</p>
+                <div class="flourish-embed flourish-chart" data-src="visualisation/22822829"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22822829/thumbnail" width="100%" alt="chart visualization" /></noscript></div>
+            </div>
+        </section>
+
+        <!-- Section: Connections -->
+        <section id="connections">
+            <h2>Connections: Correlating Fitness Data</h2>
+            <p>This section explores the relationships between different fitness data sets, revealing insights into how metrics like mood, sleep, workout intensity, calories burned, and steps taken interact. By correlating these variables, I uncovered patterns that shaped my fitness journey, from mental health benefits to physical performance trends.</p>
+            <div class="visual-section">
+                <h3>Mood vs. Calorie Burn</h3>
+                <p>This scatter plot correlates pre-workout mood with calories burned, showing that happier or neutral moods often led to higher calorie burns (e.g., 978 calories during a neutral-mood HIIT session in 2014), while stressed moods correlated with moderate burns.</p>
+                <div class="flourish-embed flourish-scatter" data-src="visualisation/22824497"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824497/thumbnail" width="100%" alt="scatter visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Sleep Hours vs. Workout Intensity</h3>
+                <p>This grid graph examines how sleep hours influenced workout intensity. Sessions following 8-9 hours of sleep, like the 93-minute cycling session on November 6, 2024, often had high intensity, while 4-6 hour sleep nights correlated with lower intensity workouts.</p>
+                <div class="flourish-embed flourish-scatter" data-src="visualisation/22824746"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824746/thumbnail" width="100%" alt="scatter visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Steps Taken vs. Distance Covered</h3>
+                <p>This spot graph correlates steps taken with distance covered, highlighting strong alignment in running sessions (e.g., 10.06 km with 745 calories on March 8, 2025) and moderate correlations in cycling, where steps were lower but distances high.</p>
+                <div class="flourish-embed flourish-scatter" data-src="visualisation/22824369"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824369/thumbnail" width="100%" alt="scatter visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Heart Rate vs. Calories Burned</h3>
+                <p>This scatter plot explores the relationship between peak heart rate and calories burned, showing that higher heart rates (e.g., 178 bpm during a 2016 cycling session) consistently correlated with higher calorie burns, particularly in HIIT and running.</p>
+                <div class="flourish-embed flourish-scatter" data-src="visualisation/22824199"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824199/thumbnail" width="100%" alt="scatter visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Workout Type vs. Mood Shift</h3>
+                <p>This cluster visualization groups workouts by type and mood shift (pre- to post-workout), revealing that yoga sessions frequently shifted stressed moods to neutral, while HIIT and strength training often turned tired moods to energized.</p>
+                <div class="flourish-embed flourish-hierarchy" data-src="visualisation/22824510"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824510/thumbnail" width="100%" alt="hierarchy visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Anxiety Score Trend Over Time</h3>
+                <p>Placeholder: Line chart tracking monthly anxiety score trends (visualization loading issue).</p>
+                <div class="d3-visualization">Anxiety trend visualization will be displayed here once loaded.</div>
+            </div>
+            <div class="visual-section">
+                <h3>Sleep Quality and Workout Intensity Heatmap</h3>
+                <p>Placeholder: Heatmap showing sleep quality vs. workout intensity (visualization loading issue).</p>
+                <div class="d3-visualization">Heatmap visualization will be displayed here once loaded.</div>
+            </div>
+            <div class="visual-section">
+                <h3>Clustering of Fitness and Mental Health Metrics</h3>
+                <p>Placeholder: Scatter plot clustering fitness and mental health metrics (visualization loading issue).</p>
+                <div class="d3-visualization">Cluster visualization will be displayed here once loaded.</div>
+            </div>
+            <div class="visual-section">
+                <h3>Mediation Analysis: Tech Usage, Sleep, and Anxiety</h3>
+                <p>Placeholder: Scatter plots exploring tech usage and anxiety mediation (visualization loading issue).</p>
+                <div class="d3-visualization">Mediation visualization will be displayed here once loaded.</div>
+            </div>
+            <div class="visual-section">
+                <h3>Tech Usage Threshold Effects</h3>
+                <p>Placeholder: Bar chart comparing anxiety scores for high vs. normal tech usage (visualization loading issue).</p>
+                <div class="d3-visualization">Threshold visualization will be displayed here once loaded.</div>
+            </div>
+            <div class="visual-section">
+                <h3>Moderation by Meditation</h3>
+                <p>Placeholder: Bar chart showing meditation's effect on tech usage and anxiety (visualization loading issue).</p>
+                <div class="d3-visualization">Moderation visualization will be displayed here once loaded.</div>
+            </div>
+        </section>
+
+        <!-- Highlight section looking forward -->
+        <div class="highlight">
+            <h2>Looking Ahead</h2>
+            <p>My fitness journey is far from over. Due to my injury I had to quit Bandminton, and due to Srishti I had to quit on life itself. But, my body is paying the price for my neglect. I am working towards healthy practises and focusing on my mental well-being as well</p>
+        </div>
+
+        <!-- Section: Reflections and Future Goals -->
+        <section id="reflections">
+            <h2>Reflections and Future Goals</h2>
+            <p>Over nearly ten years, my fitness journey has been about discipline, adaptability, and growth. I've dealt with mood swings, from stressed to energized, using exercise for mental and physical strength. My steady body fat percentage (28.5%) and VO2 Max (38.4) show stability. Meanwhile, my varied calorie burns (104–994 calories) and distances (0.52–14.84 km) demonstrate versatility. Looking ahead, I want to deepen my yoga practice for stress relief and increase my endurance with longer runs. I'll keep the balance that has defined my journey. This timeline is about more than workouts, it's about becoming a healthier, happier me. I wish I could go back to my old body, I was full of energy, but the stress and anorexia has stolen the fire away. I try to drink enough water and go to the gym everyday. But, somewhere I will have to accept the fact that I can't go back. the way ahead is forward, the sooner I realise it is better.</p>
+            <div class="visual-section">
+                <h3>Comprehensive Data Overview</h3>
+                <p>This interactive table allows exploration of all workout data categories, from calories to sleep hours, providing a searchable snapshot of my fitness metrics over nearly a decade, with filters for workout type and mood.</p>
+                <div class="flourish-embed flourish-table" data-src="visualisation/22822299"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22822299/thumbnail" width="100%" alt="table visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Super Tree of Fitness Metrics</h3>
+                <p>This hierarchical visualization organizes all fitness metrics into a super tree, showing how workout types, moods, and body metrics interrelate, with a focus on the balance achieved in 2025 through diverse exercises.</p>
+                <div class="flourish-embed flourish-hierarchy" data-src="visualisation/22824518"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824518/thumbnail" width="100%" alt="hierarchy visualization" /></noscript></div>
+            </div>
+            <div class="visual-section">
+                <h3>Tree of Workout Evolution</h3>
+                <p>This tree visualization traces the evolution of my workout preferences, showing a shift toward endurance-based activities like running and cycling in recent years, with yoga as a consistent anchor.</p>
+                <div class="flourish-embed flourish-hierarchy" data-src="visualisation/22824656"><script src="https://public.flourish.studio/resources/embed.js"></script><noscript><img src="https://public.flourish.studio/visualisation/22824656/thumbnail" width="100%" alt="hierarchy visualization" /></noscript></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer with copyright information -->
+    <footer>
+        <div class="container">
+            <p>© 2025 Aanya Pandith. Powered by PoU and my tears.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript for parallax, smooth scrolling, and Intersection Observer -->
+    <script>
+        // Parallax effect
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            const sections = document.querySelectorAll('section');
+            const scrollPos = window.scrollY;
+
+            // Header parallax
+            header.style.backgroundPositionY = `${scrollPos * 0.5}px`;
+
+            // Section parallax
+            sections.forEach(section => {
+                const sectionPos = section.getBoundingClientRect().top;
+                if (sectionPos < window.innerHeight * 0.8) {
+                    section.classList.add('visible');
+                    section.style.backgroundPositionY = `${(scrollPos - section.offsetTop) * 0.3}px`;
+                }
+            });
+        });
+
+        // Intersection Observer for fade-in animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('section, .highlight').forEach(el => observer.observe(el));
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(anchor.getAttribute('href'));
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    </script>
+</body>
+</html>
